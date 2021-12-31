@@ -45,7 +45,7 @@ app.get('/delete',async (req,res)=>{
     console.log("id deleted:"+ id)
     const collectionName = "Products"
     await deleteDocumentById(collectionName, id)
-    res.redirect('/view')
+    res.redirect('/')
 })
 
 
