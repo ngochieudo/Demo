@@ -2,7 +2,6 @@ const express = require('express')
 const async = require('hbs/lib/async')
 const app = express()
 const {ObjectId} = require('mongodb')
-
 const {insertObjectToCollection, 
         getAllDocumentsFromCollection,deleteDocumentById,
     updateCollection,getDocumentById} = require('./databaseHandler')
@@ -11,6 +10,13 @@ const {insertObjectToCollection,
 app.set('view engine', 'hbs')
 app.use(express.urlencoded({ extended: true }))
 
+
+app.get('/edit',async (req,res)=>{
+    const id = req.query.id
+    const collectionName = "Products"
+    const productToEdit = await getDocumentById(collectionName, id)
+    res.render('edit',{product:productToEdit})
+})
 app.post('/edit',async (req,res)=>{
     const nameInput = req.body.txtName
     const priceInput = req.body.txtPrice
@@ -23,21 +29,12 @@ app.post('/edit',async (req,res)=>{
     await updateCollection(collectionName, myquery, newValues)
     res.redirect('/view')
 })
-
-app.get('/edit',async (req,res)=>{
-    const id = req.query.id
-    const collectionName = "Products"
-    const productToEdit = await getDocumentById(collectionName, id)
-    res.render('edit',{product:productToEdit})
-})
-
 app.get('/',(req,res)=>{
     res.render('index')
 })
 
-app.get('/insert',async (req,res)=>{
-    const categories = await getAllDocumentsFromCollection("Categories")
-    res.render('product',{categories:categories})
+app.get('/create',async (req,res)=>{
+    res.render('product')
 })
 
 app.get('/delete',async (req,res)=>{
@@ -59,17 +56,21 @@ app.post('/product',async (req,res)=>{
     const nameInput = req.body.txtName
     const priceInput = req.body.txtPrice
     const picURLInput = req.body.txtPicURL
-    const categoryId = req.body.cbCategory
-    console.log('CategoryId: ' + categoryId)
 
-    if(isNaN(priceInput)==true){
+    if(isNaN(priceInput)==true && priceInput == ''){
         const errorMessage = "Price must be number!"
         const oldValues = {name:nameInput,price:priceInput,picURL:picURLInput}
         res.render('product',{error:errorMessage,oldValues:oldValues})
         return;
     }
+    if(nameInput.startsWith('Toy') == false) {
+        const toyMessage = "This product is not a toy!"
+        res.render('product',{toy:toyMessage})
+        return;
+    }
+  
     const newP = {name:nameInput,price:Number.parseFloat(priceInput),
-                    picURL:picURLInput,categoryId:categoryId}
+                    picURL:picURLInput}
     
     const collectionName = "Products"
     insertObjectToCollection(collectionName,newP)   
